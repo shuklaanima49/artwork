@@ -1,13 +1,14 @@
 // apps/user-service/src/main.ts
 import express from 'express';
 import { json } from 'body-parser';
-import { router as userController } from './controllers/user.controller';
+import UserRouter from './routes/user.routes';
 
 const app = express();
+const router = new UserRouter();
 app.use(json());
 
-app.use(userController);
+app.use(router.getRouter());
 
-app.listen(3000, () => {
-  console.log('User Service running on http://localhost:3000');
+app.listen(8990, () => {
+  console.log('User Service running on http://localhost:8990');
 });

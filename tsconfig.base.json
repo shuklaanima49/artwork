@@ -30,10 +30,6 @@
     "strict": true,
     "target": "es2022",
     "verbatimModuleSyntax": false,
-    "paths": {
-      "@artwork-management/auth": ["libs/auth/src/index.ts"],
-      "@artwork-management/rbac": ["libs/rbac/src/index.ts"],
-      "@artwork-management/user": ["libs/user/src/index.ts"]
-    }
+    "paths": {}
   }
 }

@@ -1,29 +1,39 @@
-import express, { Request, Response, Router } from 'express';
-import {UserService} from '@artwork-management/user';
-import {generateJWT, jwtMiddleware} from '@artwork-management/auth';
-import {rbacGuard} from '@artwork-management/rbac';
+import { Request, Response } from 'express';
+import { generateJWT } from '../libs/auth/jwt.service';
+import { UserService } from '../libs/user/user.service';
 
-const userService = new UserService();
-const router:Router = express.Router();
+interface IUserController {
+  createUser: (req: Request, res: Response) => Promise<void>;
+  login: (req: Request, res: Response) => Promise<void>;
+}
 
-// Route to create a user (Admin role required)
-router.post('/users', jwtMiddleware, rbacGuard(['admin']), async (req: Request, res: Response) => {
-  const { username, password, roles } = req.body;
-  const user = await userService.createUser(username, password, roles);
-  res.status(201).json(user);
-});
-
-// Route to authenticate user and return JWT
-router.post('/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  const user = await userService.findByUsername(username);
-
-  if (!user || !(await userService.validatePassword(user, password))) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+export class userController implements IUserController {
+  private userService: UserService;
+  constructor() {
+    this.userService = new UserService();
   }
-
-  const token = generateJWT(user.id, user.roles);
-  res.json({ token });
-});
-
-export { router };
+  async createUser(req: Request, res: Response) {
+    try {
+      const { username, password, roles } = req.body;
+      const user = await this.userService.createUser(username, password, roles);
+      res.status(201).json(user);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: 'something went wrong, please try again later' });
+    }
+  }
+  async login(req: Request, res: Response) {
+    try {
+      const { username, password } = req.body;
+      const user = await this.userService.findByUsername(username);
+      if (!user || !(await this.userService.validatePassword(user, password))) {
+        throw Error(`no user with username ${user}`);
+      }
+      const token = generateJWT(user.id, user.roles);
+      res.json({ token });
+    } catch (err) {
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
+  }
+}
