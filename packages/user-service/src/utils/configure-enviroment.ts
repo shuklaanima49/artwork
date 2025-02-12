@@ -1,0 +1,14 @@
+import dotenv from 'dotenv';
+
+const configureEnvironment = () => {
+    if(process.env.NODE_ENV === 'development') {    
+        dotenv.config({path: '.env.development'});
+
+    }else{
+        dotenv.config({path: '.env.production'}
+
+    );
+    }
+}
+
+export default configureEnvironment;

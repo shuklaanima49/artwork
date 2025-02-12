@@ -1,14 +1,21 @@
-// apps/user-service/src/main.ts
-import express from 'express';
 import { json } from 'body-parser';
+import express, { Application } from 'express';
 import UserRouter from './routes/user.routes';
+import swaggerDocs from './swagger/swagger';
+import "reflect-metadata";
+import configureEnvironment from './utils/configure-enviroment';
+configureEnvironment();
+const app:Application = express();
+const userRouter = new UserRouter();
+const port = 8990;
 
-const app = express();
-const router = new UserRouter();
+
 app.use(json());
 
-app.use(router.getRouter());
+app.use('/auth',userRouter.getRouter());
 
-app.listen(8990, () => {
-  console.log('User Service running on http://localhost:8990');
+swaggerDocs(app);
+
+app.listen(port, () => {
+  console.log('User Service running on http://localhost:8990'); 
 });

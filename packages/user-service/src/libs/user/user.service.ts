@@ -1,23 +1,98 @@
-// libs/user/src/lib/user.service.ts
-
-import bcrypt from 'bcrypt';
-import { User } from './user.model';
+import { createClient, SupabaseClient, UserMetadata } from '@supabase/supabase-js';
 
 export class UserService {
-  private users: User[] = [];
+  private supabase: SupabaseClient;
 
-  async createUser(username: string, password: string, roles: string[] = ['user']): Promise<User> {
-    const passwordHash = await bcrypt.hash(password, 10);
-    const newUser: User = { id: Date.now().toString(), username, passwordHash, roles };
-    this.users.push(newUser);
-    return newUser;
+  constructor() {
+    const supabaseUrl = process.env.SUPABASE_URL as string;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY as string;
+    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
   }
 
-  async findByUsername(username: string): Promise<User | undefined> {
-    return this.users.find(user => user.username === username);
+  /**
+   * Registers a new user using Supabase Auth.
+   * Triggers an OTP email for verification.
+   */
+  async signUp(email: string, user_metadata: UserMetadata, password: string) {
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {  ...user_metadata }
+      }
+    });
+    if (error) {
+      throw error;
+    }
+    return data;
   }
 
-  async validatePassword(user: User, password: string): Promise<boolean> {
-    return bcrypt.compare(password, user.passwordHash);
+  /**
+   * Signs in the user using Supabase Auth.
+   */
+  async signIn(email: string, password: string) {
+    const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      throw error;
+    }
+    return data;
   }
+
+  /**
+   * Verifies the OTP sent to the user's email.
+   */
+  async verifyOTP(email: string, token: string) {
+    const { data, error } = await this.supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup'
+    });
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
+
+  /**
+   * 
+   * @param email 
+   * @returns 
+   */
+  async getUserByEmail(email: string) {
+    const { data, error } = await this.supabase.from('users').select('*').eq('email', email);
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
+
+  /**
+   * @param email 
+   * @returns 
+   */
+  async resetPassword(email: string) {  
+    const { data, error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.FRONTEND_URL}/reset-password`
+    });
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
+
+  /**
+   * 
+   * @param email 
+   * @param user_metadata 
+   * @returns 
+   */
+  async updateUser(email: string, user_metadata: UserMetadata) {  
+    const { data, error } = await this.supabase.from('users').update(user_metadata).eq('email', email);
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
+
+
 }

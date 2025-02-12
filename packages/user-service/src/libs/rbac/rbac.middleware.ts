@@ -10,5 +10,6 @@ export function rbacGuard(roles: string[]) {
     }
 
     next();
+    return;
   };
 }
