@@ -19,16 +19,23 @@ export class UserController {
       if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
       }
-      const user = await this.userService.getUserByEmail(email);
-      if (user) {
-        return res.status(400).json({ message: 'User already exists' });
+      try{
+        const user = await this.userService.getUserByEmail(email);
+        if (user) {
+          return res.status(400).json({ message: 'User already exists' });
+        }
+      } catch (err) {
+        console.log('User not found in the database, creating user', err);
+        /**
+         * ? assumption here is that only user with admin role can create a user
+         * ? hence we will have the provision to assign the role to the user by the admin
+         */
+        const signUpResult = await this.userService.signUp(email, user_metadata, password);
+        return res.status(201).json({
+          message: 'User registered. Please verify your email with the OTP sent.',
+          user: signUpResult.user
+        });
       }
-      const signUpResult = await this.userService.signUp(email, user_metadata, password);
-      return res.status(201).json({
-        message: 'User registered. Please verify your email with the OTP sent.',
-        user: signUpResult.user
-      });
-
     } catch (err) {
       console.error('Error signing up user:', err);
       return res.status(500).json({ message: 'Something went wrong, please try again later' });
@@ -80,4 +87,42 @@ export class UserController {
     }
   }
 
+  /**
+   * update user endpoint
+   */
+  async updateUser(req: Request, res: Response) {
+    try {
+      const { email, user_metadata } = req.body;
+      if (!email || !user_metadata) {
+        return res.status(400).json({ message: 'Email and user_metadata are required' });
+      }
+      const updateResult = await this.userService.updateUser(email, user_metadata);
+      return res.json({
+        message: 'User updated successfully',
+        user: updateResult.user
+      });
+    } catch (err) {
+      console.error('Error updating user:', err);
+      return res.status(500).json({ message: 'Something went wrong, please try again later' });
+    }
+  }
+  /**
+   * get user by email endpoint 
+   */
+  async getUserByEmail(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+      const user = await this.userService.getUserByEmail(email);
+      return res.json({
+        message: 'User fetched successfully',
+        user: user
+      });
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      return res.status(500).json({ message: 'Something went wrong, please try again later' });
+    }
+  }
 }

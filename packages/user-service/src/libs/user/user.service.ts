@@ -87,7 +87,10 @@ export class UserService {
    * @returns 
    */
   async updateUser(email: string, user_metadata: UserMetadata) {  
-    const { data, error } = await this.supabase.from('users').update(user_metadata).eq('email', email);
+    const { data, error } = await this.supabase.auth.updateUser({
+      email,
+      data: { ...user_metadata }
+    });
     if (error) {
       throw error;
     }

@@ -1,6 +1,7 @@
 import { SupabaseClient,createClient } from "@supabase/supabase-js";
 
 
+
 export class RolesService {
   private supabase: SupabaseClient;
 
@@ -36,7 +37,20 @@ export class RolesService {
     }
     return data;
   }
-
+  /**
+   * Get a role by id
+   * @param roleId - The id of the role
+   * @returns {Promise<any>} - A promise that resolves to the role
+   * @swagger
+   *
+   */
+  async getRole(roleId: string) {
+    const { data, error } = await this.supabase.from('roles').select('*').eq('id', roleId);
+    if (error) {
+      throw error;
+    }
+    return data;
+  }
   /**
    * Create a new role in the database
    * @param {string} role - The name of the role to create
@@ -138,7 +152,7 @@ export class RolesService {
    *       201:
    */
   async addPermissionsToRole(roleId: string, permissionIds: string[]) {
-    const { data, error } = await this.supabase.from('role_permission').insert(permissionIds.map(id => ({ role_id: roleId, permission_id: id })));
+    const { data, error } = await this.supabase.from('role_permissions').insert(permissionIds.map(id => ({ role_id: roleId, permission_id: id })));
     if (error) {
         console.error('Error adding permissions to role:', error);
         throw error;
@@ -205,7 +219,6 @@ export class RolesService {
             console.error('Error adding new permissions:', error);
             throw error;
         }
-
         console.log(`Updated permissions for role ${roleId} successfully.`);
     }
 

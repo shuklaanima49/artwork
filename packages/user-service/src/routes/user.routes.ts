@@ -43,10 +43,6 @@ export class UserRouter {
      *                   type: string
      *                 phone:
      *                   type: string
-     *                 roles:
-     *                   type: array
-     *                   items: 
-     *                     type: string
      *   responses:
      *     201: 
      *       description: User created successfully
